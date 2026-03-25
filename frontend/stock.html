@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Register - Canteen Stock Register</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            color: var(--text-main);
+        }
+
+        .close {
+            color: var(--text-muted);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <nav class="sidebar" id="main-nav"></nav>
+
+        <main class="main-content">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2>Current Stock Register</h2>
+                    <div id="active-filter-badge" style="display:none; margin-top:0.4rem;">
+                        <span style="background: var(--brand, #6366f1); color:#fff; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.82rem; font-weight:600;">
+                            <i class="fa-solid fa-filter" style="margin-right:0.3rem;"></i>
+                            <span id="filter-label"></span>
+                        </span>
+                        <a href="stock.html" style="margin-left:0.5rem; font-size:0.82rem; color:var(--text-muted); text-decoration:underline; cursor:pointer;">× Clear Filter</a>
+                    </div>
+                </div>
+                <button id="add-stock-btn" class="btn btn-primary hidden">+ Add New Stock</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Item Name</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Last Updated</th>
+                        <th id="actions-header" class="hidden">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-table-body">
+                    <tr>
+                        <td colspan="6" class="text-center">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <!-- Stock Modal -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title">Add/Edit Stock</h2>
+            <form id="stock-form">
+                <input type="hidden" id="item_id">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="item_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category" required>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Fast Food">Fast Food</option>
+                        <option value="Snacks">Snacks</option>
+                        <option value="Raw Materials">Raw Materials</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" step="0.01" id="quantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input type="text" id="unit" placeholder="kg, litres, pcs" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Item</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
+    <script>
+        let currentUser = null;
+        let stockData = [];
+        let activeCategory = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = window.api.getUser();
+
+            // Read category filter from localStorage (set by dashboard category click)
+            activeCategory = localStorage.getItem('stockCategoryFilter') || null;
+            localStorage.removeItem('stockCategoryFilter'); // clear after reading
+
+            if (activeCategory) {
+                const badge = document.getElementById('active-filter-badge');
+                const label = document.getElementById('filter-label');
+                badge.style.display = 'block';
+                label.textContent = activeCategory;
+            }
+
+            // Show Add button and Actions column only for Admins
+            if (currentUser && currentUser.role === 'Admin') {
+                document.getElementById('add-stock-btn').classList.remove('hidden');
+                document.getElementById('actions-header').classList.remove('hidden');
+            }
+
+            // Bind events
+            document.getElementById('add-stock-btn').addEventListener('click', () => openModal());
+            document.getElementById('stock-form').addEventListener('submit', handleFormSubmit);
+
+            await loadStock();
+        });
+
+        async function loadStock() {
+            try {
+                const BASE = 'http://localhost:5000/api';
+                const token = window.api.getToken();
+                const url = activeCategory
+                    ? `${BASE}/stock?category=${encodeURIComponent(activeCategory)}`
+                    : `${BASE}/stock`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                stockData = await response.json();
+                renderTable();
+            } catch (error) {
+                window.app.showAlert('Failed to load stock data', 'error');
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('stock-table-body');
+            const isAdmin = currentUser && currentUser.role === 'Admin';
+
+            // Apply category filter if active
+            const displayData = activeCategory
+                ? stockData.filter(item => item.category === activeCategory)
+                : stockData;
+
+            if (displayData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center">No items found${activeCategory ? ` for category "${activeCategory}"` : ''}.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = displayData.map(item => `
+                <tr>
+                    <td><strong>#${item.item_id}</strong></td>
+                    <td style="font-weight: 700;">${item.item_name}</td>
+                    <td><span class="badge badge-primary">${item.category}</span></td>
+                    <td>
+                        <span class="${item.quantity < 10 ? 'text-danger' : 'text-main'}">
+                            ${item.quantity}
+                        </span> 
+                        <span class="text-muted text-sm">${item.unit}</span>
+                    </td>
+                    <td class="text-muted" style="font-size: 0.9rem; font-weight: 600;">${window.app.formatDate(item.last_updated)}</td>
+                    ${isAdmin ? `
+                        <td>
+                            <button class="btn btn-secondary" onclick='openModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
+                            <button class="btn btn-danger-outline" onclick='deleteStock(${item.item_id})'>Delete</button>
+                        </td>
+                    ` : ''}
+                </tr>
+            `).join('');
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('stockModal');
+
+        function openModal(item = null) {
+            document.getElementById('stock-form').reset();
+
+            if (item) {
+                document.getElementById('modal-title').innerText = 'Edit Stock Item';
+                document.getElementById('item_id').value = item.item_id;
+                document.getElementById('item_name').value = item.item_name;
+                document.getElementById('category').value = item.category;
+                document.getElementById('quantity').value = item.quantity;
+                document.getElementById('unit').value = item.unit;
+            } else {
+                document.getElementById('modal-title').innerText = 'Add New Stock';
+                document.getElementById('item_id').value = '';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // Close when clicking outside modal logic
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+
+            const id = document.getElementById('item_id').value;
+            const itemData = {
+                item_name: document.getElementById('item_name').value,
+                category: document.getElementById('category').value,
+                quantity: document.getElementById('quantity').value,
+                unit: document.getElementById('unit').value
+            };
+
+            try {
+                if (id) {
+                    await window.api.Stock.update(id, itemData);
+                    window.app.showAlert('Stock updated successfully');
+                } else {
+                    await window.api.Stock.add(itemData);
+                    window.app.showAlert('New stock item added');
+                }
+                closeModal();
+                await loadStock();
+            } catch (error) {
+                window.app.showAlert(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteStock(id) {
+            if (confirm('Are you sure you want to delete this item?')) {
+                try {
+                    await window.api.Stock.delete(id);
+                    window.app.showAlert('Stock item deleted');
+                    await loadStock();
+                } catch (error) {
+                    window.app.showAlert(error.message, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Canteen Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="main-nav"></nav>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <i class="fa-solid fa-bars"></i>
+                </div>
+                <div class="header-right">
+                    Hi. Administration
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="content-area">
+                <div class="page-greeting" style="margin-bottom: 2rem;">
+                    <div>
+                        <h2>Welcome to Canteen Management Dashboard!</h2>
+                        <div class="date" id="current-date" style="margin-top: 0.25rem;">Monday, 25 November 2024</div>
+                    </div>
+                    <button class="btn-create-order" style="padding: 0.8rem 1.5rem; background: var(--brand); color: white; border-radius: var(--radius-md); border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.9" onmouseout="this.style.opacity=1">
+                        <i class="fa-solid fa-plus"></i> CREATE NEW ORDER
+                    </button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                    <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-card accent">
+                            <div class="stat-header">
+                                <span class="stat-title">New Orders</span>
+                                <i class="fa-solid fa-basket-shopping stat-icon"></i>
+                            </div>
+                            <div class="stat-value" id="metrics-new">0</div>
+                            <div class="stat-subtitle">Update every new order</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Total Orders</span>
+                                <i class="fa-regular fa-clipboard stat-icon"></i>
+                            </div>
+                            <div class="stat-value" id="metrics-total">0</div>
+                            <div class="stat-subtitle">Total order by today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-title">Waiting List</span>
+                                <i class="fa-solid fa-clock-rotate-left stat-icon"></i>
+                            </div>
+                            <div class="stat-value" id="metrics-waiting">0</div>
+                            <div class="stat-subtitle">Total order by today</div>
+                        </div>
+                    </div>
+                    
+                    <div class="category-section" style="display: flex; flex-direction: column; background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">Stock Overview</h3>
+                        <div style="position: relative; height: 200px; width: 100%; display: flex; justify-content: center; margin-bottom: 1rem;">
+                            <canvas id="stockPieChart"></canvas>
+                        </div>
+                        <h3 style="margin-bottom: 0.5rem; font-size: 1rem; margin-top: 1rem;">Category Details</h3>
+                        <div class="category-grid" id="category-grid">
+                            <div class="category-card" onclick="goToCategory('Beverages')" style="cursor:pointer">
+                                <i class="fa-solid fa-mug-hot category-icon"></i>
+                                <span class="category-name">Beverages</span>
+                                <span class="category-count" id="cat-beverages">0</span>
+                            </div>
+                            <div class="category-card" onclick="goToCategory('Fast Food')" style="cursor:pointer">
+                                <i class="fa-solid fa-bowl-rice category-icon"></i>
+                                <span class="category-name">Fast Food</span>
+                                <span class="category-count" id="cat-fastfood">0</span>
+                            </div>
+                            <div class="category-card" onclick="goToCategory('Snacks')" style="cursor:pointer">
+                                <i class="fa-solid fa-burger category-icon"></i>
+                                <span class="category-name">Snacks</span>
+                                <span class="category-count" id="cat-snacks">0</span>
+                            </div>
+                            <div class="category-card" onclick="goToCategory('Raw Materials')" style="cursor:pointer">
+                                <i class="fa-solid fa-wheat-awn category-icon"></i>
+                                <span class="category-name">Raw Materials</span>
+                                <span class="category-count" id="cat-raw">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-bottom">
+                    <!-- Order List -->
+                    <div class="list-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Order List</span>
+                        </div>
+                        <div class="search-bar">
+                            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-light)"></i>
+                            <input type="text" placeholder="Search Order">
+                        </div>
+                        
+                        <div class="list-container" id="order-list-container">
+                            <!-- Dynamically populated via JS -->
+                            <div class="text-center p-4 text-muted">Loading orders...</div>
+                        </div>
+                    </div>
+
+                    <!-- Payment -->
+                    <div class="list-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Payment</span>
+                        </div>
+                        <div class="search-bar">
+                            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-light)"></i>
+                            <input type="text" placeholder="Search Order">
+                        </div>
+                        
+                        <div class="list-container" id="payment-list-container">
+                            <!-- Dynamically populated via JS -->
+                            <div class="text-center p-4 text-muted">Loading payment queue...</div>
+                        </div>
+                    </div>
+
+                    <!-- Popular Dishes -->
+                    <div class="list-panel">
+                        <div class="panel-header" style="margin-bottom: 0.5rem;">
+                            <span class="panel-title">Popular Dishes</span>
+                            <span class="panel-action">View All</span>
+                        </div>
+                        <div class="dish-tabs">
+                            <div class="dish-tab">Drink</div>
+                            <div class="dish-tab active">Food</div>
+                        </div>
+                        
+                        <div class="list-container" id="popular-dishes-container">
+                            <!-- Dynamically populated via JS based on Analytics -->
+                            <div class="text-center p-4 text-muted">Loading popular dishes...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let stockChartInstance = null;
+
+        function goToCategory(category) {
+            localStorage.setItem('stockCategoryFilter', category);
+            window.location.href = 'stock.html';
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Set dynamic date
+            const dateEl = document.getElementById('current-date');
+            if (dateEl) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateEl.textContent = new Date().toLocaleDateString('en-GB', options);
+            }
+
+            // Fetch Real Data
+            await fetchDashboardData();
+        });
+
+        async function fetchDashboardData() {
+            try {
+                // 1. Fetch Metrics
+                const metrics = await window.api.Orders.getMetrics();
+                document.getElementById('metrics-new').textContent = metrics.new_orders || 0;
+                document.getElementById('metrics-total').textContent = metrics.total_orders || 0;
+                document.getElementById('metrics-waiting').textContent = metrics.waiting_list || 0;
+
+                // 2. Fetch Active Orders
+                const activeOrders = await window.api.Orders.getActive();
+                renderOrderList(activeOrders);
+                renderPaymentList(activeOrders);
+
+                // 3. Fetch Analytics for Popular Dishes
+                const analytics = await window.api.Analytics.getDashboard();
+                renderPopularDishes(analytics.most_selling || []);
+
+                // 4. Populate Category Counts and Pie Chart
+                const catMap = { 'Beverages': 'cat-beverages', 'Fast Food': 'cat-fastfood', 'Snacks': 'cat-snacks', 'Raw Materials': 'cat-raw' };
+                const chartLabels = [];
+                const chartData = [];
+                const chartColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']; // Emerald, Blue, Amber, Red
+
+                if (analytics.category_distribution) {
+                    analytics.category_distribution.forEach(cat => {
+                        const elId = catMap[cat.category];
+                        if (elId && document.getElementById(elId)) {
+                            document.getElementById(elId).textContent = cat.count + ' items';
+                        }
+                        chartLabels.push(cat.category);
+                        chartData.push(cat.count);
+                    });
+
+                    // Render Pie Chart
+                    const ctx = document.getElementById('stockPieChart').getContext('2d');
+                    if (stockChartInstance) {
+                        stockChartInstance.destroy();
+                    }
+                    stockChartInstance = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [{
+                                data: chartData,
+                                backgroundColor: chartColors,
+                                borderWidth: 0,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        color: '#cbd5e1', // text-light color in dark modes generally, or we can use default
+                                        font: {
+                                            family: "'Inter', sans-serif",
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+                const showErr = (id) => { if(document.getElementById(id)) document.getElementById(id).innerHTML = `<div class='text-danger p-4 text-center text-sm'>Failed to load</div>`; };
+                showErr('order-list-container');
+                showErr('payment-list-container');
+            }
+        }
+
+        function renderOrderList(orders) {
+            const container = document.getElementById('order-list-container');
+            if(orders.length === 0) {
+                container.innerHTML = `<div class='text-muted text-center p-4 text-sm'>No active orders found.</div>`;
+                return;
+            }
+
+            container.innerHTML = orders.map(order => {
+                let badgeClass = 'new';
+                let icon = 'fa-regular fa-clock';
+                let dotColor = 'var(--info)';
+                
+                if (order.status === 'Ready') {
+                    badgeClass = 'ready';
+                    icon = 'fa-regular fa-circle-check';
+                    dotColor = 'var(--success)';
+                } else if (order.status === 'In Progress') {
+                    badgeClass = 'progress';
+                    icon = 'fa-solid fa-spinner';
+                    dotColor = 'var(--warning)';
+                }
+
+                return `
+                <div class="list-item">
+                    <div class="item-avatar">${order.avatar}</div>
+                    <div class="item-info">
+                        <div class="item-name">${order.customer_name} (#${order.order_id})</div>
+                        <div class="item-sub">${order.total_items} item</div>
+                    </div>
+                    <div class="item-status" style="cursor: pointer" onclick="cycleOrderStatus(${order.order_id}, '${order.status}')" title="Click to change status">
+                        <span class="badge ${badgeClass}"><i class="${icon}"></i> ${order.status}</span>
+                        ${order.status === 'Progress' ? '' : `<span class="status-text"><span class="status-dot" style="background:${dotColor};"></span> Status</span>`}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function renderPaymentList(orders) {
+            const container = document.getElementById('payment-list-container');
+            // Show only unpaid orders
+            const pendingPayments = orders.filter(o => o.payment_status === 'Unpaid');
+
+            if(pendingPayments.length === 0) {
+                container.innerHTML = `<div class='text-muted text-center p-4 text-sm'>No pending payments.</div>`;
+                return;
+            }
+
+            container.innerHTML = pendingPayments.map(order => `
+                <div class="list-item">
+                    <div class="item-avatar">${order.avatar}</div>
+                    <div class="item-info">
+                        <div class="item-name">${order.customer_name} (#${order.order_id})</div>
+                        <div class="item-sub">${order.total_items} item</div>
+                    </div>
+                    <button class="btn-pay" onclick="payOrder(${order.order_id})">
+                        <i class="fa-solid fa-arrow-right"></i> Pay Now
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderPopularDishes(dishes) {
+            const container = document.getElementById('popular-dishes-container');
+            if(dishes.length === 0) {
+                container.innerHTML = `<div class='text-muted text-center p-4 text-sm'>Not enough sales data yet.</div>`;
+                return;
+            }
+
+            // Using dummy images since the DB doesn't store image URLs
+            const imagePool = [
+                "https://images.unsplash.com/photo-1626804475297-41609ea0dc4eb?auto=format&fit=crop&q=80&w=100&h=100",
+                "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&q=80&w=100&h=100",
+                "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&q=80&w=100&h=100",
+                "https://images.unsplash.com/photo-1634543411039-3f4112e73a70?auto=format&fit=crop&q=80&w=100&h=100",
+            ];
+
+            container.innerHTML = dishes.map((dish, i) => `
+                <div class="dish-item">
+                    <div class="dish-rank">0${i+1}.</div>
+                    <img src="${imagePool[i % imagePool.length]}" class="dish-img" alt="${dish.item_name}">
+                    <div class="dish-info">
+                        <div class="dish-name">${dish.item_name}</div>
+                        <div class="dish-orders">Order : <span>${dish.total_sold}</span></div>
+                    </div>
+                    <div class="dish-price" style="font-size: 0.85rem; color: var(--text-muted);">Popular</div>
+                </div>
+            `).join('');
+        }
+
+        // --- Interactive Callbacks ---
+        
+        async function cycleOrderStatus(orderId, currentStatus) {
+            let nextStatus = 'In Progress';
+            if (currentStatus === 'New') nextStatus = 'In Progress';
+            else if (currentStatus === 'In Progress') nextStatus = 'Ready';
+            else if (currentStatus === 'Ready') return; // Cannot cycle past ready until paid
+
+            try {
+                await window.api.Orders.updateStatus(orderId, nextStatus);
+                await fetchDashboardData(); // Reload UI
+            } catch (error) {
+                alert("Failed to update order status");
+            }
+        }
+
+        async function payOrder(orderId) {
+            if(!confirm('Mark this order as paid?')) return;
+            try {
+                await window.api.Orders.pay(orderId);
+                await fetchDashboardData(); // Reload UI
+            } catch (error) {
+                alert("Failed to process payment: " + error.message);
+            }
+        }
+
+        // Quick Order Creation simulation
+        document.querySelector('.btn-create-order').addEventListener('click', async () => {
+            const customerName = prompt("Enter Customer ID / Name (e.g. B8 Ahmed):");
+            if (!customerName) return;
+
+            const totalItems = parseInt(prompt("How many items?", "1")) || 1;
+            try {
+                await window.api.Orders.create({
+                    customer_name: customerName,
+                    avatar: customerName.substring(0, 3).trim(),
+                    items: [{ item_id: 15, quantity: totalItems }] // Just fake inserting Dosa to avoid full modal for now
+                });
+                await fetchDashboardData(); // Refresh UI to trigger New Order appearance
+            } catch (e) {
+                alert("Failed to create order");
+            }
+        });
+
+    </script>
+</body>
+</html>

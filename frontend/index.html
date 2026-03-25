@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Canteen Stock Register</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="auth-wrapper">
+        <div class="glass-card auth-card">
+            <div class="text-center mb-8">
+                <img src="images/icon.png" alt="App Icon" style="width: 56px; height: 56px; margin-bottom: 0.5rem; border-radius: var(--radius-md);">
+                <h1>Canteen Register</h1>
+                <p class="text-muted">Sign in to manage inventory</p>
+            </div>
+
+            <div id="alert-box" class="alert alert-error"></div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+            </form>
+
+            <div class="text-center mt-4">
+                <p>Don't have an account? <a href="signup.html">Register here</a></p>
+            </div>
+            
+            <div class="text-center mt-4" style="font-size: 0.8rem; color: var(--text-muted);">
+                <i>Demo Credentials: admin / admin123</i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load API and App logic -->
+    <script src="js/api.js"></script>
+    <script>
+        // Check if already logged in -> redirect 
+        if (window.api.getToken()) {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const btn = e.target.querySelector('button');
+            const alertBox = document.getElementById('alert-box');
+            
+            try {
+                btn.textContent = 'Signing in...';
+                btn.disabled = true;
+                
+                const response = await window.api.Auth.login({ username, password });
+                
+                // Save token and user info
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                alertBox.className = 'alert alert-error animate-fade-in';
+                alertBox.textContent = error.message;
+                alertBox.style.display = 'block';
+                btn.textContent = 'Sign In';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# ===========================
+# Node.js
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===========================
+# Environment Variables (SECRETS - never upload!)
+# ===========================
+.env
+.env.local
+.env.production
+
+# ===========================
+# Logs
+# ===========================
+*.log
+logs/
+error_log.txt
+server_log.txt
+server_out.txt
+server_start.log
+init_out.txt
+test_db.txt
+test_db2.txt
+test_echo.txt
+test_lalitha.txt
+test_lalitha2.txt
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Editor Files
+# ===========================
+.vscode/
+.idea/

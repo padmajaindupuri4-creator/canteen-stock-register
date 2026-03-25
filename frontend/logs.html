@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Logs - Canteen Stock Register</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .log-Security { border-left: 4px solid var(--danger); }
+        .log-Login { border-left: 4px solid var(--secondary); }
+        .log-Sale { border-left: 4px solid var(--primary); }
+        .log-Other { border-left: 4px solid var(--warning); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <nav class="sidebar" id="main-nav"></nav>
+
+        <main class="main-content">
+            <div class="mb-6">
+                <h2 style="margin-bottom: 0.5rem;">System Activity Logs (Admin Only)</h2>
+        <p class="text-muted mb-4">Tracking all meaningful user actions, logins, sales, and security events for auditing purposes.</p>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                        <th>IP Address</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-table-body">
+                    <tr><td colspan="6" class="text-center">Loading logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        </div>
+        </main>
+    </div>
+
+    <!-- Load API and App logic -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadLogs();
+        });
+
+        async function loadLogs() {
+            const tbody = document.getElementById('logs-table-body');
+            try {
+                const logs = await window.api.Logs.getAll();
+                
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No system logs found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = logs.map(log => {
+                    let logTypeClass = 'log-Other';
+                    if (log.action.includes('Security')) logTypeClass = 'log-Security';
+                    if (log.action.includes('Login')) logTypeClass = 'log-Login';
+                    if (log.action.includes('Sale')) logTypeClass = 'log-Sale';
+
+                    return `
+                        <tr class="${logTypeClass}">
+                            <td class="text-muted">#${log.log_id}</td>
+                            <td>${log.username}</td>
+                            <td><span class="badge ${logTypeClass === 'log-Security' ? 'badge-danger' : 'badge-primary'}">${log.action}</span></td>
+                            <td style="max-width: 300px; word-break: break-all;">${log.description}</td>
+                            <td class="text-muted">${log.ip_address || 'N/A'}</td>
+                            <td class="text-muted">${window.app.formatDate(log.timestamp)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Failed to load logs:", error);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load logs. You may not have Admin permissions.</td></tr>';
+            }
+        }
+    </script>
+</body>
+</html>

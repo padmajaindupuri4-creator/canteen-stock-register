@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup - Canteen Stock Register</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="auth-wrapper">
+        <div class="glass-card auth-card">
+            <div class="text-center mb-8">
+                <h1>Canteen Register</h1>
+                <p class="text-muted">Create a new account</p>
+            </div>
+
+            <div id="alert-box" class="alert alert-error"></div>
+
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="johndoe">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role">
+                        <option value="Staff">Staff (View Only)</option>
+                        <option value="Admin">Admin (Full Access)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
+            </form>
+
+            <div class="text-center mt-4">
+                <p>Already have an account? <a href="index.html">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load API and App logic -->
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            
+            const btn = e.target.querySelector('button');
+            const alertBox = document.getElementById('alert-box');
+            
+            try {
+                btn.textContent = 'Registering...';
+                btn.disabled = true;
+                
+                await window.api.Auth.signup({ name, username, password, role });
+                
+                // Show success
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = 'Registration successful! Redirecting to login...';
+                alertBox.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } catch (error) {
+                alertBox.className = 'alert alert-error';
+                alertBox.textContent = error.message;
+                alertBox.style.display = 'block';
+                btn.textContent = 'Register';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
